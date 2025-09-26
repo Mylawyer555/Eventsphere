@@ -1,37 +1,24 @@
 {
-  // Visit https://aka.ms/tsconfig to read more about this file
   "compilerOptions": {
-    // File Layout
-    "rootDir": "./src",
-    "outDir": "./dist",
-
-  
+    "jsx":"react",
+    "target": "es2019",
+    "experimentalDecorators": true,
     "module": "commonjs",
-    "target": "esnext",
-    "types": [],
     "moduleResolution": "node",
-    "strictPropertyInitialization": false,
+    "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    "skipDefaultLibCheck": true,
+    "strictPropertyInitialization": false,
+    "strict": true,
+    "skipLibCheck": true,
     "strictFunctionTypes": false,
     "strictNullChecks": true,
     "noImplicitAny": true,
     "noImplicitThis": true,
-    "resolveJsonModule": true,
-    "emitDecoratorMetadata": true,
-    "sourceMap": true,
     "declaration": true,
-    "declarationMap": true,
-    "esModuleInterop": true,
-    "noUncheckedIndexedAccess": true,
-    "exactOptionalPropertyTypes": true,
-    "strict": true,
-    "jsx": "react-jsx",
-    "verbatimModuleSyntax": true,
-    "isolatedModules": true,
-    "noUncheckedSideEffectImports": true,
-    "moduleDetection": "force",
-    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "rootDir": "./src",
+    "emitDecoratorMetadata": true,
+    "outDir": "./dist"
   },
-  "exclude": ["./dist","./prisma/*"]
+  "exclude": ["./dist", "./prisma/*"]
 }
