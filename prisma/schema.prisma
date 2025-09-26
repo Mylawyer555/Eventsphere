@@ -1,0 +1,255 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+
+model User {
+  user_id              Int              @id @default(autoincrement())
+  email                String           @unique
+  password             String
+  role                 Role             @default(PARTICIPANT)
+  isEmailVerified      Boolean          @default(false)
+  created_at           DateTime         @default(now()) @db.Timestamptz(3)
+  updated_at           DateTime         @updatedAt
+  profile              Profile?
+  Student_Registration Registration[]   @relation("Student_Reg")
+  Student_Feedback     Feedback[]       @relation("Student_feedback")
+  Certificate          Certificate[]    @relation("Student_Certifications")
+  Event_Sharelog       Event_Sharelog[]
+  Event_Waitlist       Event_Waitlist[]
+  CalenderSync         CalenderSync[]
+}
+
+model Profile {
+  profile_Id        Int        @id @default(autoincrement())
+  fullName          String
+  userName          String
+  user_id           Int        @unique
+  user              User       @relation(fields: [user_id], references: [user_id], onUpdate: Cascade, onDelete: Cascade)
+  enrollment_number String     @unique
+  profile_picture   String?
+  bio               String?
+  mobile_no         Int
+  department        Department
+  created_at        DateTime   @default(now()) @db.Timestamptz(3)
+  updated_at        DateTime   @updatedAt
+}
+
+model Events {
+  Event_id         Int              @id @default(autoincrement())
+  Title            String
+  Description      String?
+  Category         Events_Category
+  Date             DateTime
+  Time             DateTime
+  Approval_State   Approval         @default(PENDING)
+  Approval_message String?
+  Created_at       DateTime         @default(now()) @db.Timestamptz(3)
+  Updated_at       DateTime         @updatedAt
+  Events_Venue     Events_Venue[]
+  Registration     Registration[]
+  Certificate      Certificate?
+  MediaGallery     MediaGallery[]
+  Feedback         Feedback[]
+  Event_Sharelog   Event_Sharelog[]
+  Event_Waitlist   Event_Waitlist[]
+  CalenderSync     CalenderSync?
+}
+
+model Events_Venue {
+  Venue_id      Int             @id @default(autoincrement())
+  Event_id      Int
+  Name          String
+  Address       String?
+  isOnline      Boolean         @default(false)
+  Online_url    String?
+  isActive      Boolean         @default(true)
+  Changed_at    DateTime        @default(now()) @db.Timestamptz(3)
+  event         Events          @relation(fields: [Event_id], references: [Event_id], onDelete: Cascade)
+  Event_Seating Event_Seating[]
+}
+
+model Registration {
+  id         Int      @id @default(autoincrement())
+  Event_id   Int
+  event      Events   @relation(fields: [Event_id], references: [Event_id])
+  Student_id Int?
+  Student    User?    @relation("Student_Reg", fields: [Student_id], references: [user_id])
+  Created_at DateTime @default(now()) @db.Timestamptz(3)
+  Updated_at DateTime @updatedAt
+}
+
+model Event_Seating {
+  id                 Int          @id @default(autoincrement())
+  Venue_id           Int
+  total_Seats        Int
+  Seats_Booked       Int
+  Seats_Available    Int
+  isWaitlist_Enabled Boolean
+  Created_at         DateTime     @default(now()) @db.Timestamptz(3)
+  Updated_at         DateTime     @updatedAt
+  Venue              Events_Venue @relation(fields: [Venue_id], references: [Venue_id], onUpdate: Cascade, onDelete: Cascade)
+}
+
+model Certificate {
+  id              Int      @id @default(autoincrement())
+  Event_id        Int      @unique
+  Student_id      Int
+  Student         User     @relation("Student_Certifications", fields: [Student_id], references: [user_id])
+  Certificate_Url String
+  Issued_on       DateTime @default(now()) @db.Timestamptz(3)
+  Event           Events   @relation(fields: [Event_id], references: [Event_id], onUpdate: Cascade, onDelete: NoAction)
+}
+
+model MediaGallery {
+  id          Int       @id @default(autoincrement())
+  Event_id    Int
+  Event       Events    @relation(fields: [Event_id], references: [Event_id], onUpdate: Cascade, onDelete: Cascade)
+  File_type   MediaType
+  caption     String
+  Uploaded_on DateTime  @default(now()) @db.Timestamptz(3)
+  Updated_at  DateTime  @updatedAt
+}
+
+model Feedback {
+  id         Int      @id @default(autoincrement())
+  Event_id   Int
+  event      Events   @relation(fields: [Event_id], references: [Event_id])
+  Student_id Int
+  student    User     @relation("Student_feedback", fields: [Student_id], references: [user_id])
+  Ratings    Int
+  Comments   String
+  Created_at DateTime @default(now()) @db.Timestamptz(3)
+  Updated_at DateTime @updatedAt
+}
+
+model Attendance {
+  Attendance_id Int      @id @default(autoincrement())
+  Event_id      Int
+  Student_id    Int
+  isAttended    Boolean
+  Created_at    DateTime @default(now())
+  Updated_at    DateTime @updatedAt
+}
+
+model Event_Sharelog {
+  Share_id   Int      @id @default(autoincrement())
+  Event_id   Int
+  event      Events   @relation(fields: [Event_id], references: [Event_id])
+  User_id    Int
+  user       User     @relation(fields: [User_id], references: [user_id])
+  Message    String?
+  Created_at DateTime @updatedAt
+}
+
+model Event_Waitlist {
+  Waitlist_id   Int             @id @default(autoincrement())
+  Event_id      Int
+  user_id       Int
+  Waitlist_Time DateTime
+  Status        Waitlist_Status
+  event         Events          @relation(fields: [Event_id], references: [Event_id], onUpdate: Cascade, onDelete: Cascade)
+  user          User            @relation(fields: [user_id], references: [user_id])
+}
+
+model CalenderSync {
+  id             Int      @id @default(autoincrement())
+  user_id        Int
+  Event_id       Int      @unique
+  Calender_type  String
+  Sync_Timestamp DateTime @default(now()) @db.Timestamptz(3)
+  Calender_url   String
+  event          Events   @relation(fields: [Event_id], references: [Event_id], onUpdate: Cascade)
+  user           User     @relation(fields: [user_id], references: [user_id])
+}
+
+model Event_Bookmark {
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  Event_id   Int
+  Created_at DateTime @default(now()) @db.Timestamptz(3)
+  Updated_at DateTime @updatedAt
+}
+
+model Notification {
+  Notification_id Int              @id @default(autoincrement())
+  user_id         Int
+  Event_id        Int
+  Type            NotificationType
+  Message String
+  Status NotificationStatus @default(UNREAD)
+  Created_at DateTime @default(now()) @db.Timestamptz(3)
+}
+
+enum Role {
+  PARTICIPANT
+  ORGANIZER
+  ADMIN
+}
+
+enum Events_Category {
+  ACADEMIC_AND_PROFESSIONAL
+  ARTS_AND_CULTURE
+  SOCIAL_AND_RECREATIONAL
+  EDUCATIONAL_AND_DEVELOPMENT
+  COMPETITIONS
+}
+
+enum Department {
+  FACULTY_OF_MEDICINE
+  FACULTY_OF_DENTISTRY
+  FACULTY_OF_NURSING
+  FACULTY_OF_ENGINEERING
+  FACULTY_OF_LAW
+}
+
+enum Reg_Status {
+  PENDING
+  SUCCESSFUL
+}
+
+enum Waitlist_Status {
+  WAITING
+  CONFIRMED
+  CANCELLED
+}
+
+enum MediaType {
+  VIDEO
+  IMAGES
+  SLIDES
+}
+
+enum Approval {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum NotificationType {
+  EVENT_REGISTRATION
+  EVENT_REMINDER
+  EVENT_UPDATE
+  EVENT_CANCELLATION
+  CERTIFICATE_AVAILABLE
+}
+
+enum NotificationStatus {
+  UNREAD
+  READ
+  SENT
+  FAILED
+}
