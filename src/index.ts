@@ -1,0 +1,50 @@
+import express from 'express';
+import cors from 'cors'
+import dotenv from 'dotenv'
+import {createServer} from "http"
+import userRouter from './routes/user.routes';
+import { initSocket } from './socket';
+
+dotenv.config();
+
+const portEnv = process.env.PORT
+
+if(!portEnv){
+    console.log('Port does not exist in dotenv file');
+    process.exit(1)    
+};
+
+// convert port to number 
+const PORT = parseInt(portEnv, 10)
+
+//check if port is a number 
+if(isNaN(PORT)){
+    console.log('oop! port is not a number');
+    process.exit(1);
+};
+
+// creating an express instance
+const app = express(); 
+const server = createServer(app);
+
+
+// init socket
+initSocket(server)
+
+app.use(cors({ origin: "*", credentials: true }));
+app.use(express.json()) 
+
+app.use("/api/v1/users", userRouter)
+
+//start server
+server.listen(PORT, () =>{
+    console.log(`Congratulation server is running on port ${PORT}`);
+    
+});
+
+
+
+
+
+
+

@@ -6,7 +6,6 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../src/generated/prisma"
 }
 
 datasource db {
@@ -14,11 +13,13 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
-
 model User {
   user_id              Int              @id @default(autoincrement())
   email                String           @unique
+  firstname            String
+  lastName             String
+  department           Department
+  enrollment_number    String           @unique
   password             String
   role                 Role             @default(PARTICIPANT)
   isEmailVerified      Boolean          @default(false)
@@ -34,18 +35,15 @@ model User {
 }
 
 model Profile {
-  profile_Id        Int        @id @default(autoincrement())
-  fullName          String
-  userName          String
-  user_id           Int        @unique
-  user              User       @relation(fields: [user_id], references: [user_id], onUpdate: Cascade, onDelete: Cascade)
-  enrollment_number String     @unique
-  profile_picture   String?
-  bio               String?
-  mobile_no         Int
-  department        Department
-  created_at        DateTime   @default(now()) @db.Timestamptz(3)
-  updated_at        DateTime   @updatedAt
+  profile_Id      Int      @id @default(autoincrement())
+  userName        String
+  user_id         Int      @unique
+  user            User     @relation(fields: [user_id], references: [user_id], onUpdate: Cascade, onDelete: Cascade)
+  profile_picture String?
+  bio             String?
+  mobile_no       Int
+  created_at      DateTime @default(now()) @db.Timestamptz(3)
+  updated_at      DateTime @updatedAt
 }
 
 model Events {
@@ -185,13 +183,13 @@ model Event_Bookmark {
 }
 
 model Notification {
-  Notification_id Int              @id @default(autoincrement())
+  Notification_id Int                @id @default(autoincrement())
   user_id         Int
   Event_id        Int
   Type            NotificationType
-  Message String
-  Status NotificationStatus @default(UNREAD)
-  Created_at DateTime @default(now()) @db.Timestamptz(3)
+  Message         String
+  Status          NotificationStatus @default(UNREAD)
+  Created_at      DateTime           @default(now()) @db.Timestamptz(3)
 }
 
 enum Role {
