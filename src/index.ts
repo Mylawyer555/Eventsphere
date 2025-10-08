@@ -4,6 +4,7 @@ import dotenv from 'dotenv'
 import {createServer} from "http"
 import userRouter from './routes/user.routes';
 import { initSocket } from './socket';
+import authRouter from './routes/auth.routes';
 
 dotenv.config();
 
@@ -35,6 +36,7 @@ app.use(cors({ origin: "*", credentials: true }));
 app.use(express.json()) 
 
 app.use("/api/v1/users", userRouter)
+app.use("/api/v1/auth", authRouter)
 
 //start server
 server.listen(PORT, () =>{

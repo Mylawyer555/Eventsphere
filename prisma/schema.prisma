@@ -23,6 +23,12 @@ model User {
   password             String
   role                 Role             @default(PARTICIPANT)
   isEmailVerified      Boolean          @default(false)
+  otp                  String?
+  otpExpiry            DateTime?        @db.Timestamptz(3)
+  twoFactorEnabled  Boolean   @default(false)
+  twoFactorSecret   String?
+  twoFactorType     TwoFactorMethod?
+
   created_at           DateTime         @default(now()) @db.Timestamptz(3)
   updated_at           DateTime         @updatedAt
   profile              Profile?
@@ -250,4 +256,10 @@ enum NotificationStatus {
   READ
   SENT
   FAILED
+}
+
+enum TwoFactorMethod {
+  EMAIL
+  SMS
+  AUTH_APP
 }
