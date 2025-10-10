@@ -6,7 +6,8 @@ import { RequestPasswordDTO, ResetPassword } from "../dtos/resetPassword.dto";
 import { ValidateOtpDTO } from "../dtos/validateOtp.dto";
 
 export interface AuthService {
-    login(data:LoginDTO): Promise<{accessToken:string; refreshToken:string}>;
+    login(data:LoginDTO): Promise<{message:string; tempToken?:string; accessToken?:string; refreshToken?:string}>;
+    verify2FA(token:string, otp:string):Promise<{accessToken:string; refreshToken:string}>
     createUser(data: CreateUserDTO): Promise<User>;
     verifyEmail(data: VerifyEmail): Promise<User>
     resendOTP(email: string): Promise<void>;

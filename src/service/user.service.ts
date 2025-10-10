@@ -8,10 +8,13 @@ export interface UserService {
     getUserById(id:number):Promise<User | null>
     getAllUsers():Promise<User[]>;
     getUserByRole(role:Role): Promise<User[]>;
-    updateUser(id:number, data: Partial<CreateUserDTO>): Promise<User>
+    updateUser(id:number, data: Partial<CreateUserDTO>):Promise<User>
     deleteUser(id:number): Promise<void>;
     profile(id:number): Promise<UserProfileSummary | null>;
-    updateProfile(id: number, data: Partial<ProfileSummary>): Promise<ProfileSummary | null>  
-    updateProfilePix(id:number, data: Partial<Profile>) : Promise<Profile | null>
-
-}
+    updateProfile(id: number, data: Partial<ProfileSummary>):Promise<ProfileSummary | null>  
+    updateProfilePix(id:number, data: Partial<Profile>):Promise<Profile | null>
+    suspendUser(id:number):Promise<User>;
+    activateUser(id:number):Promise<User>;
+    promoteUser(id:number, newRole:Role):Promise<User>;
+    demoteUser(id:number):Promise<User>;
+};

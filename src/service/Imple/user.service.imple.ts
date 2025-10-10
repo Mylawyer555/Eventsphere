@@ -10,6 +10,44 @@ import { StatusCodes } from "http-status-codes";
 import { ProfileSummary, UserProfileSummary } from "../../exceptions/userProfile";
 
 export class UserServiceImple implements UserService{
+    async suspendUser(id: number): Promise<User> {
+        const user = await db.user.findUnique({where:{user_id:id}});
+        if(!user){
+            throw new CustomError(404,'user not found');
+        };
+
+        if(user.isSuspended){
+            throw new CustomError(400,"User is suspended!");
+        };
+
+        return await db.user.update({
+            where:{user_id:id},
+            data:{
+                isSuspended:true
+            },
+        });
+    };
+
+    async activateUser(id: number): Promise<User> {
+        const user = await db.user.findUnique({where:{user_id:id}});
+        if(!user) throw new CustomError(404,'User not found');
+
+        if(!user.isSuspended){
+            throw new CustomError(400, "User is already active");
+        };
+
+        return await db.user.update({
+            where:{user_id:id},
+            data:{isSuspended:false}
+        });
+    };
+
+    promoteUser(id: number, newRole: Role): Promise<User> {
+        throw new Error("Method not implemented.");
+    }
+    demoteUser(id: number): Promise<User> {
+        throw new Error("Method not implemented.");
+    }
     async updateProfile(id: number, data: Partial<ProfileSummary>): Promise<ProfileSummary | null> {
         const isUserExist = await db.user.findUnique({where:{user_id:id}});
         if(!isUserExist){
@@ -223,8 +261,4 @@ export class UserServiceImple implements UserService{
         io.emit('user created', userWithoutpassword)
         return userWithoutpassword;
     }
-   
-   
-   
-    
 }

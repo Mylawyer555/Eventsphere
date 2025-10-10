@@ -25,10 +25,11 @@ model User {
   isEmailVerified      Boolean          @default(false)
   otp                  String?
   otpExpiry            DateTime?        @db.Timestamptz(3)
-  twoFactorEnabled  Boolean   @default(false)
-  twoFactorSecret   String?
-  twoFactorType     TwoFactorMethod?
-
+  twoFactorEnabled     Boolean          @default(false)
+  twoFactorSecret      String?
+  twoFactorType        TwoFactorMethod?
+  isSuspended          Boolean          @default(false)
+  isActive             Boolean          @default(true)
   created_at           DateTime         @default(now()) @db.Timestamptz(3)
   updated_at           DateTime         @updatedAt
   profile              Profile?

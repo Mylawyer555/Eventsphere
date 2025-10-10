@@ -18,9 +18,54 @@ import {
 } from "../../dtos/resetPassword.dto";
 import { ValidateOtpDTO } from "../../dtos/validateOtp.dto";
 import { VerifyEmail } from "../../dtos/verifyEmail.dto";
+import { getIO } from "../../socket";
 
 const newOtp = generateOtp();
 export class AuthServiceImple implements AuthService {
+  async verify2FA(token: string, otp: string): Promise<{ accessToken: string; refreshToken: string; }> {
+      const decode = jwt.verify(token, Configuration.jwt.secret) as {userId:number; step: string;}
+      if(decode.step !== "2FA_pending") {
+        throw new CustomError(StatusCodes.BAD_REQUEST,'Invalid or Expired session');
+      };
+
+      const user = await db.user.findUnique({
+        where:{user_id : decode.userId},
+      });
+
+      if(!user) {
+        throw new CustomError(404, 'User not found');
+      };
+
+      const isOtpValid = await ComparePassword(otp, user.otp!);
+      const isOtpExpired = user.otpExpiry! < new Date();
+      if(!isOtpValid || isOtpExpired){
+        throw new CustomError(400,'Invalid or expired otp');
+      };
+
+      // clear otp after verfication
+
+      await db.user.update({
+        where:{user_id:user.user_id},
+        data:{
+          otp:null,
+          otpExpiry:null,
+        },
+      });
+
+      const fullName = user.firstname + " " + user.lastName;
+      const accessToken = this.generateAccessToken(
+        user.user_id,
+        fullName,
+        user.role
+      );
+      const refreshToken = this.generateRefreshToken(
+        user.user_id,
+        fullName,
+        user.role
+      );
+
+      return {accessToken, refreshToken}
+  }
   async resendOTP(email: string): Promise<void> {
     const user = await db.user.findFirst({
       where: { email },
@@ -185,7 +230,7 @@ export class AuthServiceImple implements AuthService {
   }
   async login(
     data: LoginDTO
-  ): Promise<{ accessToken: string; refreshToken: string }> {
+  ): Promise<{message:string; tempToken?:string; accessToken?: string; refreshToken?: string }> {
     const user = await db.user.findUnique({
       where: {
         email: data.email,
@@ -204,7 +249,35 @@ export class AuthServiceImple implements AuthService {
         "Invalid email or password"
       );
     }
+    if(user.twoFactorEnabled){
+        const hashedOtp = await HashPassword(newOtp);
 
+        await db.user.update({
+            where:{
+                user_id:user.user_id,
+            },
+            data:{
+                otp: hashedOtp,
+                otpExpiry: generateOtpExpiry(),
+            },
+        });
+
+        await sendOtpEmail({
+            to: user.email,
+            subject: "Your login OTP",
+            otp: newOtp,
+        });
+
+        const tempToken = jwt.sign(
+            {userId: user.user_id, step:'2FA_pending'},
+            Configuration.jwt.secret,
+            {expiresIn: '5m'}
+        );
+
+        return {message:"Otp sent to your email", tempToken}
+    }
+   
+    // if no 2FA enabled
     const fullName = user.firstname + " " + user.lastName;
     const accessToken = this.generateAccessToken(
       user.user_id,
@@ -217,7 +290,14 @@ export class AuthServiceImple implements AuthService {
       user.role
     );
 
-    return { accessToken, refreshToken };
+    const io = getIO();
+    io.emit("user:login",{
+      userId: user.user_id,
+      role: user.role,
+      timestamp: new Date(),
+    });
+
+    return {message:'Login successful', accessToken, refreshToken };
   }
 
   async createUser(data: CreateUserDTO): Promise<User> {
@@ -248,6 +328,7 @@ export class AuthServiceImple implements AuthService {
               role: data.role,
               otp: hashedOtp,
               otpExpiry: generateOtpExpiry(),
+              twoFactorEnabled: data.role !== "PARTICIPANT",
             },
           });
 
