@@ -8,6 +8,7 @@ import { getIO } from "../../socket";
 import redisClient from "../../redisClient";
 import { StatusCodes } from "http-status-codes";
 import { ProfileSummary, UserProfileSummary } from "../../exceptions/userProfile";
+import { welcomeEmail } from "../../utils/Emails";
 
 export class UserServiceImple implements UserService{
     async suspendUser(id: number): Promise<User> {
@@ -42,12 +43,47 @@ export class UserServiceImple implements UserService{
         });
     };
 
-    promoteUser(id: number, newRole: Role): Promise<User> {
-        throw new Error("Method not implemented.");
-    }
-    demoteUser(id: number): Promise<User> {
-        throw new Error("Method not implemented.");
-    }
+    async promoteUser(id: number, newRole: Role): Promise<User> {
+        const user = await db.user.findUnique({where:{user_id:id}});
+
+        if(!user){
+            throw new CustomError(StatusCodes.NOT_FOUND, 'No user found');
+        };
+
+        if(user.role === newRole) {
+            throw new CustomError(400,'User already has this role');
+        };
+
+        return await db.user.update({
+            where:{
+                user_id:id,
+            },
+            data: {
+                role: newRole,
+            }
+        });
+
+    };
+
+    async demoteUser(id: number): Promise<User> {
+        const user = await db.user.findUnique({
+            where:{user_id:id},
+        });
+
+        if(!user) {
+            throw new CustomError(404,'User not found');
+        };
+
+        if(user.role === Role.PARTICIPANT) {
+            throw new CustomError(StatusCodes.BAD_REQUEST, 'User is at the lowest role')
+        };
+
+        return await db.user.update({
+            where:{user_id:id},
+            data:{role: Role.PARTICIPANT},
+        });
+    };
+    
     async updateProfile(id: number, data: Partial<ProfileSummary>): Promise<ProfileSummary | null> {
         const isUserExist = await db.user.findUnique({where:{user_id:id}});
         if(!isUserExist){
