@@ -3,6 +3,7 @@ import { UserServiceImple } from "../service/Imple/user.service.imple";
 import { CreateUserDTO } from "../dtos/createUser.dto";
 import { Role } from "@prisma/client";
 import { StatusCodes } from "http-status-codes";
+import { CustomRequest } from "../middleware/auth.middleware";
 
 export class UserController {
     private userService : UserServiceImple
@@ -76,9 +77,9 @@ export class UserController {
             next(error);
         }
     };
-    public profile = async (req:Request, res:Response, next:NextFunction):Promise<void>=>{
+    public profile = async (req:CustomRequest, res:Response, next:NextFunction):Promise<void>=>{
         try {
-            const userId = parseInt(req.params.id);
+            const userId = Number(req.userAuth?.id);
             const userProfile = await this.userService.profile(userId);
            res.status(StatusCodes.OK).json({
             error: false,
