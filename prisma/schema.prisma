@@ -39,6 +39,8 @@ model User {
   Event_Sharelog       Event_Sharelog[]
   Event_Waitlist       Event_Waitlist[]
   CalenderSync         CalenderSync[]
+  Events               Events[]         @relation("OrganizerEvents")
+  Attendance           Attendance[]
 }
 
 model Profile {
@@ -62,6 +64,8 @@ model Events {
   Time             DateTime
   Approval_State   Approval         @default(PENDING)
   Approval_message String?
+  Organizer        User             @relation("OrganizerEvents", fields: [organizerId], references: [user_id])
+  organizerId      Int
   Created_at       DateTime         @default(now()) @db.Timestamptz(3)
   Updated_at       DateTime         @updatedAt
   Events_Venue     Events_Venue[]
@@ -72,6 +76,7 @@ model Events {
   Event_Sharelog   Event_Sharelog[]
   Event_Waitlist   Event_Waitlist[]
   CalenderSync     CalenderSync?
+  Attendance       Attendance[]
 }
 
 model Events_Venue {
@@ -119,6 +124,17 @@ model Certificate {
   Event           Events   @relation(fields: [Event_id], references: [Event_id], onUpdate: Cascade, onDelete: NoAction)
 }
 
+model Outbox {
+  id         Int       @id @default(autoincrement())
+  eventType  String
+  payload    Json
+  processed  Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+  processedAt DateTime?
+}
+
+
+
 model MediaGallery {
   id          Int       @id @default(autoincrement())
   Event_id    Int
@@ -142,12 +158,16 @@ model Feedback {
 }
 
 model Attendance {
-  Attendance_id Int      @id @default(autoincrement())
-  Event_id      Int
-  Student_id    Int
-  isAttended    Boolean
-  Created_at    DateTime @default(now())
-  Updated_at    DateTime @updatedAt
+  Attendance_id     Int      @id @default(autoincrement())
+  Event_id          Int
+  StudentId         Int
+  certificateIssued Boolean  @default(false)
+  isAttended        Boolean
+  attendance_method AttendanceMethod  
+  Created_at        DateTime @default(now())
+  Updated_at        DateTime @updatedAt
+  user              User     @relation(fields: [StudentId], references: [user_id])
+  event             Events   @relation(fields: [Event_id], references: [Event_id])
 }
 
 model Event_Sharelog {
@@ -263,4 +283,11 @@ enum TwoFactorMethod {
   EMAIL
   SMS
   AUTH_APP
+}
+
+enum AttendanceMethod {
+  QR_SCAN
+  MANUAL_CHECKIN
+  AUTO_VERIFIED
+  ABSENT
 }
