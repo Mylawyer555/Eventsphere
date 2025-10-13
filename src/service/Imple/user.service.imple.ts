@@ -24,7 +24,7 @@ export class UserServiceImple implements UserService{
         return await db.user.update({
             where:{user_id:id},
             data:{
-                isSuspended:true
+                isSuspended:true,
             },
         });
     };
@@ -83,7 +83,7 @@ export class UserServiceImple implements UserService{
             data:{role: Role.PARTICIPANT},
         });
     };
-    
+
     async updateProfile(id: number, data: Partial<ProfileSummary>): Promise<ProfileSummary | null> {
         const isUserExist = await db.user.findUnique({where:{user_id:id}});
         if(!isUserExist){
@@ -139,7 +139,32 @@ export class UserServiceImple implements UserService{
     };
 
     async updateProfilePix(id: number, data: Partial<Profile>): Promise<Profile | null> {
-        throw new Error("Method not implemented.");
+        const user = await db.user.findUnique({where:{user_id: id}});
+
+        if(!user){
+            throw new CustomError(StatusCodes.NOT_FOUND,`No user found with id ${id}`)
+        };
+
+        const userProfile = await db.profile.findUnique({where:{user_id: id}});
+
+        if (!userProfile) {
+            throw new CustomError(404, 'profile not found')
+        }
+
+        let updatedUserProfile;
+
+        if(userProfile){
+            updatedUserProfile = await db.profile.update({
+                where:{
+                    user_id:id,
+                },
+                data:{
+                    profile_picture: data.profile_picture,
+                },
+            });
+        }
+
+        return updatedUserProfile ?? null
     }
     async getAllUsers(): Promise<User[]> {
         const cacheKey = `User:All`;

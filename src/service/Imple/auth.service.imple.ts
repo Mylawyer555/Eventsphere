@@ -241,6 +241,10 @@ export class AuthServiceImple implements AuthService {
       throw new CustomError(401, "Invalid email or password");
     }
 
+    if(user.isSuspended){
+      throw new CustomError(StatusCodes.BAD_REQUEST, "Your account has been suspended. Please contact support")
+    };
+
     const isPasswordValid = await ComparePassword(data.password, user.password);
 
     if (!isPasswordValid) {

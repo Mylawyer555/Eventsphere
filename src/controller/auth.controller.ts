@@ -30,6 +30,7 @@ export class AuthController {
       next(error);
     }
   };
+  
   public login = async (
     req: Request,
     res: Response,
@@ -110,6 +111,7 @@ export class AuthController {
       next(error);
     }
   };
+
   public requestPasswordReset = async (
     req: Request,
     res: Response,
@@ -126,6 +128,7 @@ export class AuthController {
       next(error);
     }
   };
+
   public validateOtp = async (
     req: Request,
     res: Response,

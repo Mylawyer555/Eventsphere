@@ -90,6 +90,72 @@ export class UserController {
         }
     };
 
+    public suspendUser = async (req:Request, res:Response, next:NextFunction):Promise<void>=>{
+        try {
+            const userId = parseInt(req.params.id);
+            const user = await this.userService.suspendUser(userId);
+            res.status(StatusCodes.ACCEPTED).json({
+                error: false,
+                message: "User has been suspended",
+                data: user,
+            })
+        } catch (error) {
+            next(error);
+        }
+    };
+    public activateUser = async (req:Request, res:Response, next:NextFunction):Promise<void>=>{
+        try {
+            const userId = parseInt(req.params.id);
+            const user = await this.userService.activateUser(userId)
+            res.status(StatusCodes.ACCEPTED).json({
+                error: false,
+                message: "User has been activated successfully",
+                data: user,
+            })
+        } catch (error) {
+            next(error);
+        }
+    };
+    public promoteUser = async (req:Request, res:Response, next:NextFunction):Promise<void>=>{
+        try {
+            const userId = parseInt(req.params.id);
+            const {newRole} = req.body
+           
+            if(!newRole){
+                res.status(StatusCodes.BAD_REQUEST).json({
+                    error:true,
+                    message:"New role is required to promote user",
+                })
+                return
+            };
+
+            const promtedUser = await this.userService.promoteUser(userId, newRole)
+            
+            res.status(StatusCodes.ACCEPTED).json({
+                error: false,
+                message: `User has been promoted ${newRole}`,
+                data: promtedUser,
+            })
+        } catch (error) {
+            next(error);
+        }
+    };
+    public demoteUser = async (req:Request, res:Response, next:NextFunction):Promise<void>=>{
+        try {
+            const userId = parseInt(req.params.id);
+            const user = await this.userService.demoteUser(userId)
+            res.status(StatusCodes.ACCEPTED).json({
+                error: false,
+                message: "User has been demoted successfully",
+                data: user,
+            })
+        } catch (error) {
+            next(error);
+        }
+    };
+
+
+
 
 
 
