@@ -1,30 +1,68 @@
-import { IsDateString, IsEnum, IsNotEmpty, IsString, Matches } from "class-validator";
+// dto/create-event.dto.ts
+import {
+  IsString,
+  IsOptional,
+  IsDateString,
+  IsInt,
+  Min,
+  ValidateNested,
+  ArrayMinSize,
+  IsBoolean,
+  IsEnum,
+} from "class-validator";
+import { Type } from "class-transformer";
 import { Events_Category } from "@prisma/client";
+
+class VenueDTO {
+  @IsString()
+  name!: string;
+
+  @IsOptional()
+  @IsString()
+  address?: string;
+
+  @IsBoolean()
+  isOnline!: boolean;
+
+  @IsOptional()
+  @IsString()
+  online_url?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
+}
 
 export class CreateEventDTO {
   @IsString()
-  @IsNotEmpty({ message: "Title of the event is required" })
-  Title: string;
+  title!: string;
 
   @IsString()
-  @IsNotEmpty({ message: "Description is required" })
-  Description: string;
+  @IsOptional()
+  description?: string;
 
   @IsEnum(Events_Category)
-  @IsNotEmpty({ message: "Category is required" })
-  Category: Events_Category;
-  
-  @IsDateString()
-  @IsNotEmpty({ message: "Event date is required" })
-  Date: Date;
-
-  @IsDateString()
-  Time: string;
-
   @IsString()
-  @IsNotEmpty({ message: "Venue is required" })
-  Event_venue: string;
+  @IsOptional()
+  category!: Events_Category;
 
-  @IsNotEmpty({ message: "Organizer ID is required" })
-  Organizer_id: number;
-};
+  @IsDateString()
+  date!: string;
+
+  @IsDateString()
+  time!: string;
+
+  @IsOptional()
+  @IsString()
+  bannerImage?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  maxParticipants?: number;
+
+  @ValidateNested({ each: true })
+  @Type(() => VenueDTO)
+  @ArrayMinSize(1)
+  venues!: VenueDTO[];
+}
