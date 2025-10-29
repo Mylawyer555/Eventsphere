@@ -3,7 +3,7 @@ import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, Length } from "class
 
 export class CreateUserDTO {
     @IsNotEmpty({message:"firstname is required "})
-    @Length(2,50, {message:"firstname should not be less than two characters and more 50 characters"});
+    @Length(2,50, {message:"firstname should not be less than two characters and more 50 characters"})
     firstname!: string;
 
     @IsNotEmpty()
