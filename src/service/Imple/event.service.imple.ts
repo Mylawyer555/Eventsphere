@@ -5,106 +5,163 @@ import { db } from "../../config/db";
 import { CustomError } from "../../exceptions/customError.error";
 import { StatusCodes } from "http-status-codes";
 import { getIO } from "../../socket";
-import { create } from "ts-node";
 
 const io = getIO();
 
 export class EventServiceImple implements EventService {
-  async updateEventStatus(eventId: number, status: Event_Status): Promise<Events> {
-      const event = await db.events.findUnique({where:{Event_id:eventId}});
-
-      if(!event) {
-        throw new CustomError(StatusCodes.NOT_FOUND, "Event not found");
-      };
-
-      const updatedStatus = await db.events.update({
-          where:{Event_id:eventId},
-          data:{
-              Status: status
-            },
-        });
-
-        await db.outbox.create({
-          data:{
-              eventType: 'EVENT_STATUS_UPDATE',
-              payload: JSON.stringify({
-                  eventId: event.Event_id,
-                  message: `Event ${updatedStatus.Status}`
-              })
-          }
-        });
-
-        return updatedStatus;
-
-
-  };
-
-  async updateEventVenue(eventId: number, data: Partial<CreateEventDTO>, organizer_Id: number): Promise<Events> {
-    const event = await db.events.findUnique({where:{Event_id:eventId}});
-
-    if(!event){
-        throw new CustomError(StatusCodes.NOT_FOUND, "Event not found");
-    };
-
-    const updatedEvent = await db.events.update({
-        where: {Event_id: eventId},
-        data:{
-            Events_Venue: data.venues
-            ? {
-                deleteMany: {},
-                create: data.venues.map((v) => ({
-                    Name: v.name,
-                    Address: v.address,
-                    isOnline: v.isOnline,
-                    Online_url: v.online_url,
-                    isActive: v.isActive,
-                })),
-            }
-            : undefined,
-        },
-        include: {Events_Venue: true},
+  async cancelEvent(eventId: number, organizerId: number): Promise<void> {
+    const event = await db.events.findUnique({
+      where: { Event_id: eventId },
     });
+    if (!event) {
+      throw new CustomError(StatusCodes.NOT_FOUND, "Event not found");
+    }
+    if (event.organizerId !== organizerId) {
+      throw new CustomError(
+        StatusCodes.FORBIDDEN,
+        "You can only cancel your own event"
+      );
+    }
 
-    await db.outbox.create({
-        data:{
-            eventType: "EVENT_VENUE_UPDATED",
-            payload: JSON.stringify({
-                eventId: updatedEvent.Event_id,
-                organizer_Id: updatedEvent.organizerId,
-            }),
-        },
-
-    });
-
-    io.emit("event: venue update",
-        {
-            message: "Event venue updated successfully",
-            eventId: updatedEvent.Event_id,
-        }
-    );
-
-    return updatedEvent;
-
-  }
-  async deleteEvent(eventId: number, organizer_Id: number): Promise<void> {
-    return await db.$transaction(async (tx) => {
-      const deletedEvent = await tx.events.delete({
+    await db.$transaction(async (tx) => {
+      await tx.events.update({
         where: { Event_id: eventId },
+        data: { Status: Event_Status.CANCELLED },
       });
 
       await tx.outbox.create({
         data: {
-          eventType: "EVENT_DELETED",
-          payload: JSON.stringify({
-            eventId: deletedEvent.Event_id,
-            message: "Event deleted ",
-            organizer_Id: deletedEvent.organizerId,
-          }),
-          createdAt: new Date(),
+          eventType: "EVENT_CANCELLED",
+          payload: JSON.stringify({ eventId, organizerId }),
         },
       });
     });
+
+    io.emit("event:cancelled", {
+      message: "Event has been cancelled",
+      data: event,
+    })
+  };
+
+  async updateEventStatus(
+    eventId: number,
+    status: Event_Status
+  ): Promise<Events> {
+    const event = await db.events.findUnique({ where: { Event_id: eventId } });
+
+    if (!event) {
+      throw new CustomError(StatusCodes.NOT_FOUND, "Event not found");
+    }
+
+    const updatedStatus = await db.events.update({
+      where: { Event_id: eventId },
+      data: {
+        Status: status,
+      },
+    });
+
+    await db.outbox.create({
+      data: {
+        eventType: "EVENT_STATUS_UPDATE",
+        payload: JSON.stringify({
+          eventId: event.Event_id,
+          message: `Event ${updatedStatus.Status}`,
+        }),
+      },
+    });
+
+    io.emit("event_status:update", {
+      message: "An event status has been changed",
+      data: updatedStatus,
+    })
+
+    return updatedStatus;
+  };
+
+  async updateEventVenue(
+    eventId: number,
+    data: Partial<CreateEventDTO>,
+    organizer_Id: number
+  ): Promise<Events> {
+    const event = await db.events.findUnique({ where: { Event_id: eventId } });
+
+    if (!event) {
+      throw new CustomError(StatusCodes.NOT_FOUND, "Event not found");
+    }
+
+    if (event.organizerId !== organizer_Id) {
+      throw new CustomError(
+        StatusCodes.FORBIDDEN,
+        "You don't have the permission to perform this action"
+      );
+    }
+
+    const updatedEvent = await db.events.update({
+      where: { Event_id: eventId },
+      data: {
+        Events_Venue: data.venues
+          ? {
+              deleteMany: {},
+              create: data.venues.map((v) => ({
+                Name: v.name,
+                Address: v.address,
+                isOnline: v.isOnline,
+                Online_url: v.online_url,
+                isActive: v.isActive,
+              })),
+            }
+          : undefined,
+      },
+      include: { Events_Venue: true },
+    });
+
+    await db.outbox.create({
+      data: {
+        eventType: "EVENT_VENUE_UPDATED",
+        payload: JSON.stringify({
+          eventId: updatedEvent.Event_id,
+          organizer_Id: updatedEvent.organizerId,
+        }),
+      },
+    });
+
+    io.emit("event: venue update", {
+      message: "Event venue updated successfully",
+      data: updatedEvent
+    });
+
+    return updatedEvent;
   }
+  async deleteEvent(
+    eventId: number,
+    userId: number,
+    role: string
+  ): Promise<void> {
+    const event = await db.events.findUnique({ where: { Event_id: eventId } });
+    if (!event) throw new CustomError(StatusCodes.NOT_FOUND, "Event not found");
+
+    if (role === "ORGANIZER" && event.organizerId !== userId)
+      throw new CustomError(
+        StatusCodes.FORBIDDEN,
+        "You can only delete your own event"
+      );
+
+    await db.$transaction(async (tx) => {
+      await tx.events.delete({ where: { Event_id: eventId } });
+
+      await tx.outbox.create({
+        data: {
+          eventType: "EVENT_DELETED",
+          payload: JSON.stringify({ eventId, deletedBy: userId }),
+        },
+      });
+    });
+
+    io.emit("event:deleted", {
+      message: "An event has been deleted",
+      data: event,
+    });
+  };
 
   async createEvent(
     data: CreateEventDTO,
@@ -166,13 +223,18 @@ export class EventServiceImple implements EventService {
         },
       });
 
+      io.emit("event:created", {
+        message: "A new event has been created",
+        data: event,
+      })
+
       return event;
     });
-  }
+  };
 
   async listEvents(
     filter?: any,
-    cursor?: number,                                                                                                                              
+    cursor?: number,
     limit = 10
   ): Promise<Events[]> {
     const whereClause: any = {};
@@ -216,8 +278,10 @@ export class EventServiceImple implements EventService {
       orderBy: { Created_at: "asc" },
     });
 
+    
+
     return event;
-  }
+  };
 
   async updateEvent(
     eventId: number,
@@ -287,13 +351,13 @@ export class EventServiceImple implements EventService {
         },
       });
 
-
-        io.emit("event:updated ", {
-        message: "Event updated successfully ",
-        eventId: updatedEvent.Event_id,
-        });
-
       return updatedEvent;
+    });
+
+    
+    io.emit("event:updated ", {
+      message: "Event updated successfully ",
+      data: this.updateEvent,
     });
 
   };
@@ -316,7 +380,7 @@ export class EventServiceImple implements EventService {
       throw new CustomError(StatusCodes.NOT_FOUND, "Event not found");
     }
     return event;
-  }
+  };
 
   async reviewEvent(
     eventId: number,
@@ -349,4 +413,4 @@ export class EventServiceImple implements EventService {
 
     return updated;
   }
-}
+};

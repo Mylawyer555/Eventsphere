@@ -4,7 +4,7 @@ import {validate, ValidationError} from 'class-validator';
 import {Request, Response,NextFunction} from 'express';
 
 export const validateMiddleware = (type: any) =>{
-    return async(req:Request, res:Response, next:NextFunction):Promise<void> => {
+    return async(req:Request, res:Response, next:NextFunction):Promise<Response | void> => {
         // transform plain text into a dto instance
         const dtoInstance = plainToInstance(type, req.body);
 

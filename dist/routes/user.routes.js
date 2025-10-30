@@ -1,0 +1,25 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const user_controller_1 = require("../controller/user.controller");
+const express_1 = __importDefault(require("express"));
+const validationMiddleware_middleware_1 = require("../middleware/validationMiddleware.middleware");
+const createUser_dto_1 = require("../dtos/createUser.dto");
+const auth_middleware_1 = require("../middleware/auth.middleware");
+const isAdmin_middleware_1 = __importDefault(require("../middleware/isAdmin.middleware"));
+const userController = new user_controller_1.UserController();
+const userRouter = express_1.default.Router();
+userRouter.post("/", (0, validationMiddleware_middleware_1.validateMiddleware)(createUser_dto_1.CreateUserDTO), userController.createUser);
+userRouter.get('/:id', auth_middleware_1.authenticateUser, userController.getUserById);
+userRouter.get('/', auth_middleware_1.authenticateUser, isAdmin_middleware_1.default, userController.getAllUsers);
+userRouter.get('/role/:role', auth_middleware_1.authenticateUser, userController.getUsersByRole);
+userRouter.patch('/updateuser', auth_middleware_1.authenticateUser, userController.updateUser);
+userRouter.get('/auth/profile', auth_middleware_1.authenticateUser, userController.profile);
+userRouter.post('/suspend-user', auth_middleware_1.authenticateUser, isAdmin_middleware_1.default, userController.suspendUser);
+userRouter.post('/activate-user', auth_middleware_1.authenticateUser, isAdmin_middleware_1.default, userController.activateUser);
+userRouter.post('/promote-user', auth_middleware_1.authenticateUser, isAdmin_middleware_1.default, userController.promoteUser);
+userRouter.post('/demote-user', auth_middleware_1.authenticateUser, isAdmin_middleware_1.default, userController.demoteUser);
+userRouter.delete('/delete-user', auth_middleware_1.authenticateUser, isAdmin_middleware_1.default, userController.deleteUser);
+exports.default = userRouter;

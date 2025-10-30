@@ -1,0 +1,24 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = __importDefault(require("express"));
+const auth_controller_1 = require("../controller/auth.controller");
+const validationMiddleware_middleware_1 = require("../middleware/validationMiddleware.middleware");
+const createUser_dto_1 = require("../dtos/createUser.dto");
+const login_dto_1 = require("../dtos/login.dto");
+const verifyEmail_dto_1 = require("../dtos/verifyEmail.dto");
+const resetPassword_dto_1 = require("../dtos/resetPassword.dto");
+const validateOtp_dto_1 = require("../dtos/validateOtp.dto");
+const authRouter = express_1.default.Router();
+const authController = new auth_controller_1.AuthController();
+authRouter.post('/sign-up', (0, validationMiddleware_middleware_1.validateMiddleware)(createUser_dto_1.CreateUserDTO), authController.createUser);
+authRouter.post('/login', (0, validationMiddleware_middleware_1.validateMiddleware)(login_dto_1.LoginDTO), authController.login);
+authRouter.post('/verify-2fa', authController.verify2fa);
+authRouter.post('/verify-email', (0, validationMiddleware_middleware_1.validateMiddleware)(verifyEmail_dto_1.VerifyEmail), authController.verifyEmail);
+authRouter.post('/resend-otp', authController.resendOTP);
+authRouter.post('/request-password-reset', (0, validationMiddleware_middleware_1.validateMiddleware)(resetPassword_dto_1.RequestPasswordDTO), authController.requestPasswordReset);
+authRouter.post('/validate-otp', (0, validationMiddleware_middleware_1.validateMiddleware)(validateOtp_dto_1.ValidateOtpDTO), authController.validateOtp);
+authRouter.post('/reset-password', (0, validationMiddleware_middleware_1.validateMiddleware)(resetPassword_dto_1.ResetPassword), authController.resetPassword);
+exports.default = authRouter;
