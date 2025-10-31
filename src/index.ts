@@ -7,6 +7,7 @@ import { initSocket } from './socket';
 import authRouter from './routes/auth.routes';
 import eventRouter from './routes/event.routes';
 import registrationRouter from './routes/eventRegistration.routes';
+import approvalRouter from './routes/eventapproval.route';
 
 dotenv.config();
 
@@ -40,7 +41,9 @@ app.use(express.json())
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/events", eventRouter);
+app.use("/api/v1/admins", approvalRouter);
 app.use("/api/v1/registrations",registrationRouter);
+
 
 //start server
 server.listen(PORT, () =>{
