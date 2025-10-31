@@ -8,6 +8,7 @@ import authRouter from './routes/auth.routes';
 import eventRouter from './routes/event.routes';
 import registrationRouter from './routes/eventRegistration.routes';
 import approvalRouter from './routes/eventapproval.route';
+import attendanceRouter from './routes/attendance.routes';
 
 dotenv.config();
 
@@ -43,6 +44,7 @@ app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/events", eventRouter);
 app.use("/api/v1/admins", approvalRouter);
 app.use("/api/v1/registrations",registrationRouter);
+app.use("/api/v1/attendance", attendanceRouter)
 
 
 //start server

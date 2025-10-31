@@ -125,6 +125,8 @@ model Certificate {
   Student         User     @relation("Student_Certifications", fields: [Student_id], references: [user_id])
   Certificate_Url String
   Issued_on       DateTime @default(now()) @db.Timestamptz(3)
+  pdfUrl          String?
+  issued          Boolean @default(false)
   Event           Events   @relation(fields: [Event_id], references: [Event_id], onUpdate: Cascade, onDelete: NoAction)
 }
 
@@ -165,11 +167,13 @@ model Attendance {
   StudentId         Int
   certificateIssued Boolean          @default(false)
   isAttended        Boolean
-  attendance_method AttendanceMethod
+  status            AttendanceStatus @default(ABSENT)
   Created_at        DateTime         @default(now())
   Updated_at        DateTime         @updatedAt
   user              User             @relation(fields: [StudentId], references: [user_id])
   event             Events           @relation(fields: [Event_id], references: [Event_id])
+
+  @@unique([Event_id,StudentId])
 }
 
 model Event_Sharelog {
@@ -294,9 +298,10 @@ enum TwoFactorMethod {
   AUTH_APP
 }
 
-enum AttendanceMethod {
-  QR_SCAN
-  MANUAL_CHECKIN
-  AUTO_VERIFIED
+
+
+enum AttendanceStatus {
+  PRESENT
   ABSENT
+  LATE
 }
