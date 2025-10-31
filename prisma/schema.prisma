@@ -66,6 +66,7 @@ model Events {
   maxParticipants  Int?
   Approval_State   Approval         @default(PENDING)
   Status           Event_Status     @default(UPCOMING)
+  registered       Int              @default(0)
   Approval_message String?
   Organizer        User             @relation("OrganizerEvents", fields: [organizerId], references: [user_id])
   organizerId      Int
