@@ -209,6 +209,8 @@ export class UserServiceImple implements UserService{
     }
 
     async updateUser(id: number, data: Partial<CreateUserDTO>): Promise<User> {
+        const io = getIO()
+
         const isUserExist = await db.user.findUnique({where:{user_id:id}});
         if(!isUserExist) {
             throw new CustomError(StatusCodes.NOT_FOUND, `No user found with id:${id}`)
@@ -221,6 +223,8 @@ export class UserServiceImple implements UserService{
 
         // update redis 
         await redisClient.setex(`user:${id}`, 3600, JSON.stringify(user))
+
+        io.emit("User:update", user.user_id)
 
         return user;
     }
@@ -296,6 +300,8 @@ export class UserServiceImple implements UserService{
     };
     
     async createUser(data: CreateUserDTO): Promise<Omit<User, "password" | "role">> {
+        
+
         const isUserExist = await db.user.findFirst({
             where:{email: data.email},
         });

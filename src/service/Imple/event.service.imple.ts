@@ -6,10 +6,12 @@ import { CustomError } from "../../exceptions/customError.error";
 import { StatusCodes } from "http-status-codes";
 import { getIO } from "../../socket";
 
-const io = getIO();
+
 
 export class EventServiceImple implements EventService {
+ 
   async cancelEvent(eventId: number, organizerId: number): Promise<void> {
+     const io = getIO();
     const event = await db.events.findUnique({
       where: { Event_id: eventId },
     });
@@ -47,6 +49,7 @@ export class EventServiceImple implements EventService {
     eventId: number,
     status: Event_Status
   ): Promise<Events> {
+     const io = getIO();
     const event = await db.events.findUnique({ where: { Event_id: eventId } });
 
     if (!event) {
@@ -83,6 +86,7 @@ export class EventServiceImple implements EventService {
     data: Partial<CreateEventDTO>,
     organizer_Id: number
   ): Promise<Events> {
+     const io = getIO();
     const event = await db.events.findUnique({ where: { Event_id: eventId } });
 
     if (!event) {
@@ -137,6 +141,7 @@ export class EventServiceImple implements EventService {
     userId: number,
     role: string
   ): Promise<void> {
+     const io = getIO();
     const event = await db.events.findUnique({ where: { Event_id: eventId } });
     if (!event) throw new CustomError(StatusCodes.NOT_FOUND, "Event not found");
 
@@ -167,6 +172,7 @@ export class EventServiceImple implements EventService {
     data: CreateEventDTO,
     organizer_id: number
   ): Promise<Events> {
+     const io = getIO();
     const organizer = await db.user.findUnique({
       where: { user_id: organizer_id },
     });
@@ -288,6 +294,7 @@ export class EventServiceImple implements EventService {
     data: Partial<CreateEventDTO>,
     organizer_Id: number
   ): Promise<Events> {
+     const io = getIO();
     const event = await db.events.findUnique({
       where: { Event_id: eventId },
     });

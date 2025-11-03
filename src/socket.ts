@@ -2,7 +2,6 @@ import { Server } from "socket.io";
 import {Server as HTTPServer,} from 'http'
 import { StatusCodes } from "http-status-codes";
 import { CustomError } from "./exceptions/customError.error";
-
 let io:Server;
 
 export const initSocket = (server: HTTPServer) => {

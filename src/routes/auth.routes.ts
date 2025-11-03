@@ -14,7 +14,7 @@ authRouter.post('/sign-up',validateMiddleware(CreateUserDTO), authController.cre
 
 authRouter.post('/login', validateMiddleware(LoginDTO), authController.login);
 
-authRouter.post('/verify-2fa', authController.verify2fa)
+authRouter.post('/verify-2fa', authController.verify2fa) // where role !== participant
 
 authRouter.post('/verify-email', validateMiddleware(VerifyEmail), authController.verifyEmail);
 

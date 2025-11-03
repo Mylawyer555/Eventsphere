@@ -5,10 +5,11 @@ import { CustomError } from "../../exceptions/customError.error";
 import { StatusCodes } from "http-status-codes";
 import { getIO } from "../../socket";
 
-const io = getIO()
 
 export class  EventRegistrationServiceImple implements EventRegistrationService {
     async registerEvent(userId: number, eventId: number): Promise<void> {
+        const io = getIO()
+
         return await db.$transaction(async (tx) => {
             const event = await tx.events.findUnique({
                 where:{Event_id: eventId},
@@ -74,6 +75,8 @@ export class  EventRegistrationServiceImple implements EventRegistrationService 
     };
 
     async cancelUserRegistration(userId: number, eventId: number): Promise<void> {
+        const io = getIO()
+
         return await db.$transaction(async(tx) =>{
             const registration= await tx.registration.findFirst({
                 where:{
